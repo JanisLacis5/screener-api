@@ -1,7 +1,10 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+import requests
 
-def say_hi(data):
-    string = f'say_hi function called, i = {0}'
-    print(string)
-    return HttpResponse(string)
+
+def send_hod_data(data):
+    url = 'http://localhost:3000/api/hod-screener-data'
+    res = requests.post(url, json=data)
+    res = res.json()
+    if res['message'] == 'success':
+        return
+    print(res['message'])

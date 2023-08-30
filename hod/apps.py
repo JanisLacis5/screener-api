@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from .main_script import main
 
 
 class HodConfig(AppConfig):
