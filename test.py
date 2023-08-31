@@ -4,20 +4,31 @@ from time import perf_counter
 import pytz
 from yahooquery import Ticker
 import pandas as pd
-from views import send_hod_data
+
+
+def fetch_price(stock):
+    stock_data = Ticker(stock).price[stock]
+    try:
+        return {stock: (stock_data['regularMarketDayHigh'], stock_data['regularMarketVolume'])}
+    except TypeError as e:
+        print(f'there was a type error = {e}, on stock = {stock}')
+        pass
+    except KeyError as e:
+        print(f'there was a key error = {e}, on stock = {stock}')
+        pass
 
 
 def get_stock_price(stocks):
+    print('getting prices')
     start = perf_counter()  # TEMP
 
-    def fetch_price(stock):
-        return {stock: Ticker(stock).price[stock]['regularMarketDayHigh']}
-
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        full_price_data = pd.Series({
-            list(item.keys())[0]: list(item.values())[0]
-            for item in executor.map(fetch_price, stocks)
-        })
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        full_price_data = pd.Series(
+            {
+                list(item.keys())[0]: list(item.values())[0]
+                for item in executor.map(fetch_price, stocks)
+                if item is not None
+            })
 
     end = perf_counter()  # TEMP
     # print(end - start)  #TEMP
@@ -28,31 +39,33 @@ def get_stock_price(stocks):
 def find_hod_prices(stocks, old_data):
     new_data = get_stock_price(stocks)
 
+    # send data
     for stock in stocks:
         if old_data[stock] < new_data[stock]:
+            print('sending data')
             data = {stock: new_data[stock]}
-            send_hod_data(data=data)
 
     return new_data
 
 
 def get_stocks():
+    print('getting stocks')
     # get all the tickers that are in my prefered price range and add to the stocks_to_watch list
-    # stocks_to_watch = list()
+    stocks_to_watch = list()
 
-    # with open('ticker-list.csv') as f:
-    #     # skip header line in file
-    #     next(f)
-    #
-    #     # filtering and appending process
-    #     for line in f:
-    #         line_split = line.split(',')
-    #         ticker = line_split[0]
-    #         price = float(line_split[2][1:])
-    #         if 2 < price < 50:
-    #             stocks_to_watch.append(ticker)
-    #
-    stocks_to_watch = ['MSFT', 'TSLA', 'AAPL', 'VFS']
+    with open('ticker-list.csv') as f:
+        # skip header line in file
+        next(f)
+
+        # filtering and appending process
+        for line in f:
+            line_split = line.split(',')
+            ticker = line_split[0].strip()
+            price = float(line_split[2][1:])
+            volume = int(line_split[8].strip())
+            if 2 < price < 50 and volume > 500_000 and '^' not in ticker and '/' not in ticker:
+                stocks_to_watch.append(ticker)
+    print(len(stocks_to_watch))
     starting_data = get_stock_price(tuple(stocks_to_watch))
     data = find_hod_prices(stocks_to_watch, starting_data)
     return {
@@ -72,7 +85,7 @@ data = get_stocks()
 stocks_to_watch, data = data['stocks_to_watch'], data['hod_data']
 
 while True:
-    send_hod_data({'msft': 911.75})
+    print('starting while loop')
     temp_time = str(datetime.now())  # TEMP
 
     # refresh stock array each hour
