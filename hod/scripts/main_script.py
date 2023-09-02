@@ -4,7 +4,8 @@ from time import perf_counter
 import pytz
 from yahooquery import Ticker
 import pandas as pd
-from ..views import send_hod_data
+from hod.views import send_hod_data
+from hod.scripts.prepare_stocks import make_series
 
 
 def analysis(stock):
@@ -68,31 +69,31 @@ def find_hod_prices(stocks, old_data):
     return new_data
 
 
-def get_stocks():
-    print('getting stocks')
-    # get all the tickers that are in my prefered price range and add to the stocks_to_watch list
-    stocks_to_watch = list()
-
-    with open('../../ticker-list.csv') as f:
-        # skip header line in file
-        next(f)
-
-        # filtering and appending process
-        for line in f:
-            line_split = line.split(',')
-            ticker = line_split[0].strip()
-            if do_append(price, volume, change, ticker):
-                analysis_data = analysis(ticker)
-                price, volume, change = analysis_data['price'], analysis_data['volume'], analysis_data['change']
-                stocks_to_watch.append(ticker)
-    print(len(stocks_to_watch))
-
-    starting_data = get_stock_price(tuple(stocks_to_watch))
-    data = find_hod_prices(stocks_to_watch, starting_data)
-    return {
-        'stocks_to_watch': stocks_to_watch,
-        'hod_data': data
-    }
+# def get_stocks():
+#     print('getting stocks')
+#     # get all the tickers that are in my prefered price range and add to the stocks_to_watch list
+#     stocks_to_watch = list()
+#
+#     with open('../../ticker-list.csv') as f:
+#         # skip header line in file
+#         next(f)
+#
+#         # filtering and appending process
+#         for line in f:
+#             line_split = line.split(',')
+#             ticker = line_split[0].strip()
+#             if do_append(price, volume, change, ticker):
+#                 analysis_data = analysis(ticker)
+#                 price, volume, change = analysis_data['price'], analysis_data['volume'], analysis_data['change']
+#                 stocks_to_watch.append(ticker)
+#     print(len(stocks_to_watch))
+#
+#     starting_data = get_stock_price(tuple(stocks_to_watch))
+#     data = find_hod_prices(stocks_to_watch, starting_data)
+#     return {
+#         'stocks_to_watch': stocks_to_watch,
+#         'hod_data': data
+#     }
 
 
 def get_eastern_time():
@@ -102,8 +103,8 @@ def get_eastern_time():
     return est_time
 
 
-data = get_stocks()
-stocks_to_watch, data = data['stocks_to_watch'], data['hod_data']
+data = make_series()
+stocks_to_watch = list(data.index)
 
 while True:
     print('starting while loop')
@@ -112,8 +113,7 @@ while True:
     # refresh stock array each hour
     time = get_eastern_time()
     if int(time) % 100 == 0:
-        data = get_stocks()
-        stocks_to_watch, data = data['stocks_to_watch'], data['hod_data']
+        stocks_to_watch = make_series()
 
     data = find_hod_prices(stocks_to_watch, data)
 
