@@ -4,27 +4,8 @@ from time import perf_counter
 import pytz
 from yahooquery import Ticker
 import pandas as pd
-from hod.views import send_hod_data
+from hod.views import send_hod_data, download_file
 from hod.scripts.prepare_stocks import make_series
-
-
-def analysis(stock):
-    price = Ticker(stock).price[stock]['regularMarketPrice']
-    volume = Ticker(stock).price[stock]['regularMarketVolume']
-    change = (Ticker(stock).price[stock]['regularMarketPreviousClose'] - Ticker(stock).price[stock][
-        'regularMarketPrice']) / Ticker(stock).price[stock]['regularMarketPrice'] * 100
-
-    return {
-        'price': price,
-        'volume': volume,
-        'change': change
-    }
-
-
-def do_append(price, volume, change, stock):
-    if 2 < price < 30 and volume > 500_000 and change > 5 and '^' not in stock and '/' not in stock:
-        return True
-    return False
 
 
 def fetch_price(stock):
@@ -69,33 +50,6 @@ def find_hod_prices(stocks, old_data):
     return new_data
 
 
-# def get_stocks():
-#     print('getting stocks')
-#     # get all the tickers that are in my prefered price range and add to the stocks_to_watch list
-#     stocks_to_watch = list()
-#
-#     with open('../../ticker-list.csv') as f:
-#         # skip header line in file
-#         next(f)
-#
-#         # filtering and appending process
-#         for line in f:
-#             line_split = line.split(',')
-#             ticker = line_split[0].strip()
-#             if do_append(price, volume, change, ticker):
-#                 analysis_data = analysis(ticker)
-#                 price, volume, change = analysis_data['price'], analysis_data['volume'], analysis_data['change']
-#                 stocks_to_watch.append(ticker)
-#     print(len(stocks_to_watch))
-#
-#     starting_data = get_stock_price(tuple(stocks_to_watch))
-#     data = find_hod_prices(stocks_to_watch, starting_data)
-#     return {
-#         'stocks_to_watch': stocks_to_watch,
-#         'hod_data': data
-#     }
-
-
 def get_eastern_time():
     est_timezone = pytz.timezone("America/New_York")
     est_time = datetime.now(est_timezone)
@@ -108,11 +62,14 @@ stocks_to_watch = list(data.index)
 
 while True:
     print('starting while loop')
+    print(download_file())
+    print('downloaded file')
     temp_time = str(datetime.now())  # TEMP
 
     # refresh stock array each hour
     time = get_eastern_time()
     if int(time) % 100 == 0:
+        download_file()
         stocks_to_watch = make_series()
 
     data = find_hod_prices(stocks_to_watch, data)
