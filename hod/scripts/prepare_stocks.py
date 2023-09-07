@@ -7,7 +7,7 @@ import pandas as pd
 def prepare_stocks():
     return_list = list()
 
-    with open('../../ticker-list.csv') as f:
+    with open('ticker-list.csv') as f:
         next(f)
         for line in f:
             split_line = line.split(',')
@@ -16,7 +16,7 @@ def prepare_stocks():
                 continue
             price = split_line[2].strip()
             change = split_line[4].strip()
-            volume = split_line[-3].strip()
+            volume = split_line[8].strip()
             if 2 < float(price[1:]) < 30 and int(volume) > 500_000 and float(change[:-1]) > 5:
                 return_list.append(stock)
         print(len(return_list))
