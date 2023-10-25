@@ -1,25 +1,23 @@
 from yahooquery import Ticker
-from time import perf_counter
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
+from sql_connection import create_server_connection
 
 
 def prepare_stocks():
     return_list = list()
+    conn = create_server_connection('DELLINESEK', 'stocksDB', 'root', 'root')
+    cursor = conn.cursor()
 
-    with open('ticker-list.csv') as f:
-        next(f)
-        for line in f:
-            split_line = line.split(',')
-            stock = split_line[0].strip()
-            if '^' in stock or '/' in stock:
-                continue
-            price = split_line[2].strip()
-            change = split_line[4].strip()
-            volume = split_line[8].strip()
-            if 2 < float(price[1:]) < 30 and int(volume) > 500_000 and float(change[:-1]) > 5:
-                return_list.append(stock)
-        print(len(return_list))
+    table = cursor.execute('SELECT * FROM stocks')
+
+    columns = ['symbol', 'price', 'dayChange', 'floatShares', 'volume', 'relVolume']
+    table_df = pd.DataFrame.from_records(list(table), columns=columns)
+    table_df.reset_index()
+
+    for row, stock in table_df.iterrows():
+        if 2 < stock['floatShares'] < 30 and stock['volume'] > 500_000 and stock['dayChange'] > 5:
+            return_list.append(stock)
 
     return return_list
 
