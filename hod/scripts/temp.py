@@ -1,7 +1,10 @@
 from prepare_stocks import prepare_stocks
-from yahooquery import Ticker
 import pandas as pd
+from yahooquery import Ticker
+import yfinance as yf
+import requests
 
-t = Ticker('AAPL')
+# query2.finance.yahoo.com/v6/finance/quoteSummary/aapl?modules=price&formatted=false&lang=en-US&region=US&corsDomain=finance.yahoo.com
 
-print(t.price)
+print(requests.get(
+    'https://query2.finance.yahoo.com/v10/finance/quoteSummary/AAPL?modules=financialData&modules=quoteType&modules=defaultKeyStatistics&modules=assetProfile&modules=summaryDetail&ssl=true'))

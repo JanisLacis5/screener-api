@@ -4,21 +4,37 @@ import pandas as pd
 from sql_connection import create_server_connection
 
 
+# GETTING STOCKS FROM DB
+
+# def prepare_stocks():
+#     return_list = list()
+#     conn = create_server_connection(r'DESKTOP-4C6G875\MSSQLSERVER03', 'stocksDB', 'root', 'root')
+#     cursor = conn.cursor()
+#
+#     table = cursor.execute('SELECT * FROM stocks')
+#
+#     columns = ['symbol', 'price', 'dayChange', 'floatShares', 'volume', 'relVolume']
+#     table_df = pd.DataFrame.from_records(list(table), columns=columns)
+#     table_df.reset_index()
+#
+#     for row, stock in table_df.iterrows():
+#         if 2 < stock['floatShares'] < 30 and stock['volume'] > 500_000 and stock['dayChange'] > 5:
+#             return_list.append(stock)
+#
+#     return return_list
+
 def prepare_stocks():
     return_list = list()
-    conn = create_server_connection('DELLINESEK', 'stocksDB', 'root', 'root')
-    cursor = conn.cursor()
 
-    table = cursor.execute('SELECT * FROM stocks')
+    stocks = pd.read_csv('./ticker-list.csv')
+    stocks.reset_index()
 
-    columns = ['symbol', 'price', 'dayChange', 'floatShares', 'volume', 'relVolume']
-    table_df = pd.DataFrame.from_records(list(table), columns=columns)
-    table_df.reset_index()
+    for row, stock in stocks.iterrows():
+        float_shares = Ticker(stock['symbol']).key_stats[stock['symbol']]['floatShares']
+        if float_shares < 50_000_000 and int(stock['volume']) > 500_000 and float(stock['pctchange'][:-1]) > 5:
+            return_list.append(stock['symbol'])
 
-    for row, stock in table_df.iterrows():
-        if 2 < stock['floatShares'] < 30 and stock['volume'] > 500_000 and stock['dayChange'] > 5:
-            return_list.append(stock)
-
+    print(len(return_list))
     return return_list
 
 
