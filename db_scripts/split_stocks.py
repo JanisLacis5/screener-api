@@ -1,5 +1,4 @@
-import pandas as pd
-from sql_conn import create_server_connection
+from scripts.sql_conn import create_server_connection
 from yahooquery import Ticker
 from scripts.functions import get_eastern_time
 
