@@ -122,4 +122,4 @@ GitHub.sublime-settings
 
 #CUSTOM
 test.py
-scripts/sql_conn.py
+db_scripts/sql_conn.py

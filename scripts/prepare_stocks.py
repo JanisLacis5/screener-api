@@ -1,7 +1,4 @@
-from yahooquery import Ticker
-from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
-from sql_conn import create_server_connection
 
 
 # GETTING STOCKS FROM DB
